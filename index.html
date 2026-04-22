@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>泛癌早筛样本采集系统</title>
+<style>
+/* 样式部分保持原样，未做变动 */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; background:linear-gradient(160deg,#070b14 0%,#0f172a 40%,#111827 100%); font-family:'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif; color:#e2e8f0; }
+.container { max-width:480px; margin:0 auto; padding:32px 16px 100px; }
+.header { text-align:center; margin-bottom:28px; }
+.header .tag { display:inline-flex; align-items:center; gap:8px; margin-bottom:8px; }
+.header .dot { width:8px; height:8px; border-radius:50%; background:#10b981; box-shadow:0 0 8px rgba(16,185,129,0.5); }
+.header .ver { font-size:11px; color:#64748b; letter-spacing:3px; text-transform:uppercase; }
+.header h1 { font-size:22px; font-weight:700; color:#f1f5f9; margin:0 0 4px; letter-spacing:0.5px; }
+.header .sub { font-size:12px; color:#475569; }
+.hospital-badge { margin-top:12px; display:inline-flex; align-items:center; gap:8px; border-radius:20px; padding:5px 14px; font-size:12px; }
+.hospital-badge.main { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); color:#6ee7b7; }
+.hospital-badge.sub-h { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.25); color:#93c5fd; }
+.switch-btn { cursor:pointer; color:#475569; font-size:11px; margin-left:4px; }
+.card { background:rgba(30,41,59,0.6); border-radius:16px; border:1px solid rgba(148,163,184,0.08); padding:20px; backdrop-filter:blur(10px); }
+.card-title { font-size:15px; font-weight:600; margin-bottom:16px; color:#cbd5e1; }
+.hospital-list { display:flex; flex-direction:column; gap:8px; }
+.hospital-item { background:rgba(51,65,85,0.35); border:1px solid rgba(148,163,184,0.08); border-radius:12px; padding:13px 16px; color:#e2e8f0; font-size:13px; cursor:pointer; text-align:left; display:flex; justify-content:space-between; align-items:center; transition:all 0.15s; }
+.hospital-item:active { transform:scale(0.98); }
+.main-tag { font-size:10px; background:rgba(16,185,129,0.15); color:#6ee7b7; padding:2px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.25); margin-right:6px; }
+.code-tag { font-size:11px; color:#475569; font-family:monospace; }
+.stats-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px; }
+.stat-box { background:rgba(30,41,59,0.6); border-radius:12px; border:1px solid rgba(148,163,184,0.06); padding:12px 10px; text-align:center; }
+.stat-num { font-size:22px; font-weight:700; font-family:monospace; }
+.stat-label { font-size:10px; color:#64748b; margin-top:2px; }
+.last-record { background:rgba(30,41,59,0.4); border-radius:10px; border:1px solid rgba(148,163,184,0.06); padding:10px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
+.last-label { font-size:12px; color:#64748b; }
+.last-value { font-size:14px; font-weight:600; color:#e2e8f0; font-family:monospace; }
+.form-group { margin-bottom:16px; }
+.form-label { font-size:12px; color:#64748b; margin-bottom:6px; display:block; }
+.input-row { display:flex; gap:8px; }
+input[type="text"], input[type="password"] {
+  width:100%; background:rgba(15,23,42,0.8); border:1px solid rgba(148,163,184,0.15);
+  border-radius:10px; padding:13px 14px; color:#f1f5f9; font-size:15px; outline:none; transition:border-color 0.2s;
+}
+input:focus { border-color:rgba(59,130,246,0.4); }
+input::placeholder { color:#334155; }
+.auto-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.25); border-radius:10px; padding:0 14px; color:#93c5fd; font-size:12px; cursor:pointer; white-space:nowrap; }
+.type-row { display:flex; gap:10px; }
+.type-btn { flex:1; border-radius:12px; padding:14px 8px; color:#e2e8f0; cursor:pointer; text-align:center; transition:all 0.15s; }
+.type-btn.inactive { background:rgba(51,65,85,0.3); border:1px solid rgba(148,163,184,0.08); }
+.type-btn.full-active { background:rgba(16,185,129,0.15); border:1.5px solid rgba(16,185,129,0.5); }
+.type-btn.blood-active { background:rgba(245,158,11,0.15); border:1.5px solid rgba(245,158,11,0.5); }
+.type-icon { font-size:18px; margin-bottom:4px; }
+.type-name { font-size:13px; font-weight:600; }
+.type-desc { font-size:10px; color:#64748b; margin-top:3px; }
+.submit-btn { width:100%; border:none; border-radius:12px; padding:13px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.submit-btn.active { background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; box-shadow:0 4px 20px rgba(59,130,246,0.25); }
+.submit-btn.disabled { background:rgba(51,65,85,0.4); color:#475569; cursor:not-allowed; }
+.action-row { display:flex; gap:8px; margin-top:14px; }
+.action-btn { flex:1; border-radius:10px; padding:11px; font-size:12px; cursor:pointer; text-align:center; }
+.history-btn { background:rgba(30,41,59,0.5); border:1px solid rgba(148,163,184,0.08); color:#94a3b8; }
+.export-btn-active { background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); color:#6ee7b7; }
+.export-btn-disabled { background:rgba(51,65,85,0.3); border:1px solid rgba(148,163,184,0.06); color:#475569; cursor:not-allowed; }
+.history-panel { margin-top:14px; background:rgba(30,41,59,0.5); border-radius:14px; border:1px solid rgba(148,163,184,0.06); overflow:hidden; }
+.history-header { padding:12px 16px; border-bottom:1px solid rgba(148,163,184,0.06); font-size:13px; font-weight:600; color:#cbd5e1; display:flex; justify-content:space-between; }
+.history-list { max-height:400px; overflow-y:auto; }
+.history-item { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid rgba(148,163,184,0.04); }
+.record-id { font-size:14px; font-weight:600; color:#e2e8f0; font-family:monospace; }
+.record-name { font-size:13px; color:#94a3b8; margin-left:8px; }
+.record-time { font-size:10px; color:#475569; margin-top:2px; }
+.sample-tag { font-size:11px; padding:2px 8px; border-radius:5px; }
+.tag-full { background:rgba(16,185,129,0.12); color:#6ee7b7; border:1px solid rgba(16,185,129,0.25); }
+.tag-blood { background:rgba(245,158,11,0.12); color:#fcd34d; border:1px solid rgba(245,158,11,0.25); }
+.del-btn { background:none; border:none; color:#475569; cursor:pointer; font-size:13px; padding:2px 4px; }
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9998; display:flex; align-items:center; justify-content:center; padding:20px; }
+.modal-box { background:#1e293b; border-radius:16px; padding:28px; width:100%; max-width:360px; border:1px solid rgba(148,163,184,0.1); }
+.modal-title { font-size:17px; font-weight:700; color:#f1f5f9; margin-bottom:6px; }
+.modal-desc { font-size:13px; color:#64748b; margin-bottom:20px; }
+.modal-btns { display:flex; gap:10px; margin-top:16px; }
+.modal-btn { flex:1; border-radius:10px; padding:11px; font-size:14px; cursor:pointer; text-align:center; }
+.btn-cancel { background:rgba(51,65,85,0.6); border:1px solid rgba(148,163,184,0.1); color:#94a3b8; }
+.btn-primary { background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; font-weight:600; }
+.btn-danger { background:#ef4444; border:none; color:#fff; font-weight:600; }
+.error-text { font-size:12px; color:#ef4444; margin-top:4px; }
+.export-panel { margin-top:12px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:12px; padding:16px; text-align:center; }
+.scope-row { display:flex; gap:8px; margin-bottom:14px; }
+.scope-btn { flex:1; border-radius:8px; padding:10px 8px; font-size:13px; cursor:pointer; text-align:center; color:#e2e8f0; }
+.scope-active { background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); }
+.scope-inactive { background:rgba(51,65,85,0.3); border:1px solid rgba(148,163,184,0.08); }
+.summary-panel { margin-top:14px; background:rgba(59,130,246,0.05); border-radius:12px; border:1px solid rgba(59,130,246,0.1); padding:14px; }
+.summary-title { font-size:12px; font-weight:600; color:#93c5fd; margin-bottom:10px; }
+.summary-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(148,163,184,0.04); font-size:12px; }
+.summary-total { display:flex; justify-content:space-between; padding:8px 0 0; font-size:13px; font-weight:600; }
+.all-stats { margin-top:16px; padding:10px 14px; background:rgba(59,130,246,0.06); border-radius:10px; border:1px solid rgba(59,130,246,0.1); }
+.all-stats-text { font-size:11px; color:#64748b; }
+.toast { position:fixed; top:24px; left:50%; transform:translateX(-50%); padding:11px 24px; border-radius:10px; font-size:14px; font-weight:600; z-index:9999; animation:slideDown 0.3s ease; color:#fff; }
+.toast-success { background:#10b981; box-shadow:0 8px 30px rgba(16,185,129,0.35); }
+.toast-error { background:#ef4444; box-shadow:0 8px 30px rgba(239,68,68,0.35); }
+.loading { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+.spinner { width:40px; height:40px; border:3px solid #1e293b; border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+.hidden { display:none; }
+button:active { transform:scale(0.97); }
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:rgba(148,163,184,0.15); border-radius:3px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes slideDown { from { opacity:0; transform:translateX(-50%) translateY(-12px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+  <div style="text-align:center">
+    <div class="spinner"></div>
+    <div id="loadingText" style="font-size:14px;color:#64748b">连接数据库中...</div>
+  </div>
+</div>
+
+<div id="app" class="container hidden">
+  <div id="toast" class="toast hidden"></div>
+
+  <div class="header">
+    <div class="tag"><div class="dot"></div><span class="ver">Sample Collector v2.0</span></div>
+    <h1>泛癌早筛样本采集系统</h1>
+    <div class="sub">中国人群恶性肿瘤泛癌早筛试剂盒研发</div>
+    <div id="hospitalBadge" class="hidden"></div>
+  </div>
+
+  <div id="step0">
+    <div class="card">
+      <div class="card-title">请选择采集医院</div>
+      <div id="hospitalList" class="hospital-list"></div>
+      <div id="allStats" class="all-stats" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <div id="step2" class="hidden">
+    <div id="statsBar" class="stats-bar"></div>
+    <div id="lastRecord" class="last-record"></div>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">样本编号</label>
+        <div class="input-row">
+          <input type="text" id="idInput" placeholder="" style="flex:1;font-family:monospace;letter-spacing:1px">
+          <button class="auto-btn" onclick="autoFillId()">自动</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">患者姓名</label>
+        <input type="text" id="nameInput" placeholder="请输入患者姓名">
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="margin-bottom:8px">样本类型</label>
+        <div class="type-row">
+          <div id="typeFullBtn" class="type-btn inactive" onclick="selectType('full')">
+            <div class="type-icon">🧬</div><div class="type-name">三样全</div><div class="type-desc">癌组织+癌旁+血液</div>
+          </div>
+          <div id="typeBloodBtn" class="type-btn inactive" onclick="selectType('blood_only')">
+            <div class="type-icon">🩸</div><div class="type-name">仅血液</div><div class="type-desc">单独血液</div>
+          </div>
+        </div>
+      </div>
+      <button id="submitBtn" class="submit-btn disabled" onclick="submitRecord()" disabled>确认录入</button>
+    </div>
+
+    <div class="action-row">
+      <button id="historyBtn" class="action-btn history-btn" onclick="toggleHistory()">查看记录</button>
+      <button id="exportBtn" class="action-btn" onclick="handleExport()"></button>
+    </div>
+
+    <div id="exportPanel" class="export-panel hidden"></div>
+    <div id="historyPanel" class="history-panel hidden"></div>
+    <div id="summaryPanel" class="hidden"></div>
+  </div>
+
+  <div id="passwordModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-title">主中心验证</div>
+      <div class="modal-desc">请输入主中心管理密码以导出数据</div>
+      <input type="password" id="passwordInput" placeholder="请输入密码">
+      <div id="passwordError" class="error-text hidden"></div>
+      <div class="modal-btns">
+        <button class="modal-btn btn-cancel" onclick="closePasswordModal()">取消</button>
+        <button class="modal-btn btn-primary" onclick="verifyPassword()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-box" style="text-align:center">
+      <div style="font-size:16px;font-weight:600;color:#f1f5f9;margin-bottom:8px">确认删除？</div>
+      <div id="deleteInfo" style="font-size:14px;color:#94a3b8;margin-bottom:20px"></div>
+      <div class="modal-btns">
+        <button class="modal-btn btn-cancel" onclick="closeDeleteModal()">取消</button>
+        <button class="modal-btn btn-danger" onclick="confirmDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/** 核心配置 **/
+const ENV_ID = "shujushouji-d6gwg53bc55dc9cf0";
+const MAIN_PASSWORD = "zxyy2026";
+const HOSPITALS = [
+  { name:"温州医科大学附属温州中心医院", code:"ZXYY", isMain:true },
+  { name:"温岭市第一人民医院", code:"WLYY", isMain:false },
+  { name:"温州医科大学附属第二医院", code:"WEDY", isMain:false },
+  { name:"宁波大学附属第一医院", code:"NBYY", isMain:false },
+  { name:"丽水市中心医院", code:"LSYY", isMain:false },
+  { name:"浙江省台州医院", code:"TZYY", isMain:false },
+  { name:"温州医科大学附属第一医院", code:"WEYY", isMain:false },
+];
+
+let currentHospital = null;
+let records = [];
+let selectedType = null;
+let isMainAuth = false;
+let showingHistory = false;
+let exportScope = "hospital";
+let deleteTargetId = null;
+
+const API_BASE = "https://sample-api.2389636536.workers.dev";
+
+/** 数据库操作 **/
+async function loadRecords() {
+  try {
+    const res = await fetch(`${API_BASE}/records`);
+    const data = await res.json();
+    records = data.map(r => ({
+      id: r.record_id,
+      patientName: r.name,
+      hospitalCode: r.hospital.split("|")[0],
+      hospitalName: r.hospital.split("|")[1] || r.hospital,
+      sampleType: r.sample_type,
+      sampleLabel: r.sample_type === "full" ? "三样全" : "仅血液",
+      time: r.created_at,
+      timestamp: new Date(r.created_at).getTime(),
+      dbId: r.id,
+    }));
+  } catch (e) {
+    console.error("LoadRecords Error:", e);
+    records = [];
+  }
+}
+
+async function dbAddRecord(record) {
+  const res = await fetch(`${API_BASE}/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      record_id: record.id,
+      name: record.patientName,
+      hospital: `${record.hospitalCode}|${record.hospitalName}`,
+      sample_type: record.sampleType,
+      created_at: record.time,
+    })
+  });
+  if (!res.ok) throw new Error("保存失败");
+  return await res.json();
+}
+
+async function dbDeleteById(sampleId) {
+  const record = records.find(r => r.id === sampleId);
+  if (!record) throw new Error("记录不存在");
+  const res = await fetch(`${API_BASE}/delete/${record.dbId}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("删除失败");
+}
+
+/** 系统初始化 **/
+async function init() {
+  const loadingText = document.getElementById("loadingText");
+  try {
+    loadingText.textContent = "同步中心数据库...";
+    await loadRecords();
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    renderHospitalList();
+  } catch (e) {
+    console.error("Init error:", e);
+    document.getElementById("loading").innerHTML = `
+      <div style="text-align:center;color:#ef4444;padding:20px">
+        <div style="font-weight:600;margin-bottom:8px">系统连接失败</div>
+        <div style="font-size:12px;opacity:0.8">${e.message}</div>
+        <button onclick="location.reload()" style="margin-top:15px;background:#3b82f6;color:white;border:none;padding:8px 20px;border-radius:6px">重试</button>
+      </div>`;
+  }
+}
+
+/** UI 逻辑 (保持不变) **/
+function showToast(msg, type = "success") {
+  const el = document.getElementById("toast");
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  el.classList.remove("hidden");
+  setTimeout(() => el.classList.add("hidden"), 2500);
+}
+
+function renderHospitalList() {
+  const list = document.getElementById("hospitalList");
+  list.innerHTML = HOSPITALS.map(h => `
+    <div class="hospital-item" onclick="selectHospital('${h.code}')">
+      <span>${h.isMain ? '<span class="main-tag">主中心</span>' : ''}${h.name}</span>
+      <span class="code-tag">${h.code}</span>
+    </div>
+  `).join("");
+  const allFull = records.filter(r => r.sampleType === "full").length;
+  const allBlood = records.filter(r => r.sampleType === "blood_only").length;
+  document.getElementById("allStats").innerHTML = `<div class="all-stats-text">📊 全部医院已录入 <span style="color:#93c5fd;font-weight:600">${records.length}</span> 例 · 三样全 <span style="color:#6ee7b7">${allFull}</span> · 仅血液 <span style="color:#fcd34d">${allBlood}</span></div>`;
+}
+
+function selectHospital(code) {
+  currentHospital = HOSPITALS.find(h => h.code === code);
+  isMainAuth = false; showingHistory = false; selectedType = null;
+  document.getElementById("step0").classList.add("hidden");
+  document.getElementById("step2").classList.remove("hidden");
+  renderBadge();
+  renderMainUI();
+}
+
+function switchHospital() {
+  currentHospital = null;
+  document.getElementById("step2").classList.add("hidden");
+  document.getElementById("step0").classList.remove("hidden");
+  document.getElementById("hospitalBadge").classList.add("hidden");
+  renderHospitalList();
+}
+
+function renderBadge() {
+  const h = currentHospital;
+  const badge = document.getElementById("hospitalBadge");
+  badge.className = `hospital-badge ${h.isMain ? 'main' : 'sub-h'}`;
+  badge.innerHTML = `<span>${h.isMain ? '🏥 主中心 ' : '📍 '}${h.name}</span><span class="switch-btn" onclick="switchHospital()">切换</span>`;
+  badge.classList.remove("hidden");
+}
+
+function getHospitalRecords() { return records.filter(r => r.hospitalCode === currentHospital.code); }
+
+function getLastNumber() {
+  const hrs = getHospitalRecords();
+  if (hrs.length === 0) return 0;
+  const nums = hrs.map(r => { const n = parseInt(r.id.replace(currentHospital.code, "")); return isNaN(n) ? 0 : n; });
+  return Math.max(...nums);
+}
+
+function getNextId() { return `${currentHospital.code}${String(getLastNumber() + 1).padStart(4, "0")}`; }
+
+function autoFillId() { document.getElementById("idInput").value = getNextId(); checkSubmit(); }
+
+function renderMainUI() {
+  const hrs = getHospitalRecords();
+  const fullC = hrs.filter(r => r.sampleType === "full").length;
+  const bloodC = hrs.filter(r => r.sampleType === "blood_only").length;
+
+  document.getElementById("statsBar").innerHTML = [
+    { label:"本院总计", value:hrs.length, color:"#3b82f6" },
+    { label:"三样全", value:fullC, color:"#10b981" },
+    { label:"仅血液", value:bloodC, color:"#f59e0b" },
+  ].map(s => `<div class="stat-box"><div class="stat-num" style="color:${s.color}">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join("");
+
+  const last = hrs.length > 0 ? hrs[hrs.length - 1] : null;
+  document.getElementById("lastRecord").innerHTML = `<span class="last-label">上一个编号</span><span class="last-value">${last ? last.id + ' ' + last.patientName : '暂无记录'}</span>`;
+
+  document.getElementById("idInput").value = "";
+  document.getElementById("idInput").placeholder = getNextId();
+  document.getElementById("nameInput").value = "";
+  selectedType = null;
+  document.getElementById("typeFullBtn").className = "type-btn inactive";
+  document.getElementById("typeBloodBtn").className = "type-btn inactive";
+  checkSubmit();
+
+  const isMain = currentHospital.isMain;
+  const exportBtn = document.getElementById("exportBtn");
+  exportBtn.className = `action-btn ${isMain ? 'export-btn-active' : 'export-btn-disabled'}`;
+  exportBtn.innerHTML = isMain ? '📥 导出表格' : '🔒 仅主中心可导出';
+  document.getElementById("historyBtn").textContent = `查看记录 (${hrs.length})`;
+}
+
+function selectType(type) {
+  selectedType = type;
+  document.getElementById("typeFullBtn").className = `type-btn ${type === 'full' ? 'full-active' : 'inactive'}`;
+  document.getElementById("typeBloodBtn").className = `type-btn ${type === 'blood_only' ? 'blood-active' : 'inactive'}`;
+  checkSubmit();
+}
+
+function checkSubmit() {
+  const id = document.getElementById("idInput").value.trim();
+  const name = document.getElementById("nameInput").value.trim();
+  const ok = id && name && selectedType;
+  const btn = document.getElementById("submitBtn");
+  btn.className = `submit-btn ${ok ? 'active' : 'disabled'}`;
+  btn.disabled = !ok;
+}
+
+async function submitRecord() {
+  const id = document.getElementById("idInput").value.trim().toUpperCase();
+  const name = document.getElementById("nameInput").value.trim();
+  if (records.find(r => r.id === id)) { showToast("该编号已存在，请检查", "error"); return; }
+
+  const record = {
+    id, patientName: name, hospitalCode: currentHospital.code, hospitalName: currentHospital.name,
+    sampleType: selectedType, sampleLabel: selectedType === "full" ? "三样全" : "仅血液",
+    time: new Date().toLocaleString("zh-CN"), timestamp: Date.now(),
+  };
+
+  try {
+    await dbAddRecord(record);
+    records.push(record);
+    showToast(`✓ ${id} ${name} 录入成功`);
+    renderMainUI();
+    if (showingHistory) renderHistory();
+  } catch (e) { showToast("录入失败: " + e.message, "error"); }
+}
+
+function toggleHistory() {
+  showingHistory = !showingHistory;
+  const panel = document.getElementById("historyPanel");
+  if (showingHistory) { panel.classList.remove("hidden"); renderHistory(); }
+  else { panel.classList.add("hidden"); }
+}
+
+function renderHistory() {
+  const hrs = [...getHospitalRecords()].reverse();
+  document.getElementById("historyPanel").innerHTML = `
+    <div class="history-header"><span>采集记录</span><span style="font-size:11px;color:#64748b">${hrs.length} 条</span></div>
+    ${hrs.length === 0 ? '<div style="padding:28px;text-align:center;color:#475569;font-size:13px">暂无记录</div>' :
+    `<div class="history-list">${hrs.map(r => `
+      <div class="history-item">
+        <div style="flex:1;min-width:0">
+          <div><span class="record-id">${r.id}</span><span class="record-name">${r.patientName}</span></div>
+          <div class="record-time">${r.time}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="sample-tag ${r.sampleType === 'full' ? 'tag-full' : 'tag-blood'}">${r.sampleLabel}</span>
+          <button class="del-btn" onclick="openDeleteModal('${r.id}')">✕</button>
+        </div>
+      </div>
+    `).join("")}</div>`}`;
+}
+
+function handleExport() {
+  if (!currentHospital.isMain) return showToast("权限不足", "error");
+  if (isMainAuth) showExportPanel();
+  else document.getElementById("passwordModal").classList.remove("hidden");
+}
+
+function verifyPassword() {
+  if (document.getElementById("passwordInput").value === MAIN_PASSWORD) {
+    isMainAuth = true; closePasswordModal(); showExportPanel(); renderSummary();
+  } else {
+    document.getElementById("passwordError").textContent = "密码错误";
+    document.getElementById("passwordError").classList.remove("hidden");
+  }
+}
+
+function closePasswordModal() { document.getElementById("passwordModal").classList.add("hidden"); }
+
+function showExportPanel() {
+  const hrs = getHospitalRecords();
+  document.getElementById("exportPanel").innerHTML = `
+    <div style="font-size:13px;color:#a7f3d0;margin-bottom:12px">选择导出范围</div>
+    <div class="scope-row">
+      <div id="scopeHospital" class="scope-btn scope-active" onclick="setScope('hospital')">本院数据 (${hrs.length})</div>
+      <div id="scopeAll" class="scope-btn scope-inactive" onclick="setScope('all')">全部医院 (${records.length})</div>
+    </div>
+    <button class="modal-btn btn-primary" style="width:100%" onclick="exportCSV()">确认导出</button>`;
+  document.getElementById("exportPanel").classList.remove("hidden");
+}
+
+function setScope(s) {
+  exportScope = s;
+  document.getElementById("scopeHospital").className = `scope-btn ${s === 'hospital' ? 'scope-active' : 'scope-inactive'}`;
+  document.getElementById("scopeAll").className = `scope-btn ${s === 'all' ? 'scope-active' : 'scope-inactive'}`;
+}
+
+function exportCSV() {
+  const data = exportScope === "all" ? records : getHospitalRecords();
+  let csv = "\uFEFF序号,样本编号,患者姓名,医院,类型,时间\n";
+  data.forEach((r, i) => csv += `${i+1},${r.id},${r.patientName},${r.hospitalName},${r.sampleLabel},${r.time}\n`);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `采集记录_${new Date().toLocaleDateString()}.csv`;
+  a.click();
+}
+
+function renderSummary() {
+  const panel = document.getElementById("summaryPanel");
+  let html = `<div class="summary-panel"><div class="summary-title">📊 全部医院汇总</div>`;
+  HOSPITALS.forEach(h => {
+    const hr = records.filter(r => r.hospitalCode === h.code);
+    if (hr.length > 0) {
+      html += `<div class="summary-row"><span>${h.name.substring(0,6)}...</span><span>${hr.length}例</span></div>`;
+    }
+  });
+  html += `</div>`;
+  panel.innerHTML = html;
+  panel.classList.remove("hidden");
+}
+
+function openDeleteModal(id) { deleteTargetId = id; document.getElementById("deleteModal").classList.remove("hidden"); }
+function closeDeleteModal() { document.getElementById("deleteModal").classList.add("hidden"); }
+
+async function confirmDelete() {
+  try {
+    await dbDeleteById(deleteTargetId);
+    records = records.filter(r => r.id !== deleteTargetId);
+    closeDeleteModal();
+    renderMainUI();
+    if (showingHistory) renderHistory();
+    showToast("已成功删除");
+  } catch (e) { showToast("删除失败", "error"); }
+}
+
+document.getElementById("idInput")?.addEventListener("input", function() { this.value = this.value.toUpperCase(); checkSubmit(); });
+document.getElementById("nameInput")?.addEventListener("input", checkSubmit);
+
+init();
+</script>
+</body>
+</html>
